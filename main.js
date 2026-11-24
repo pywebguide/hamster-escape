@@ -335,7 +335,35 @@
   addEventListener("contextmenu", e => e.preventDefault());
   document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
 
+  // ───────── полный экран ─────────
+  // Android, компьютеры и iPad умеют requestFullscreen. iPhone — нет: там помогает только «На экран Домой».
+  const root = document.documentElement;
+  const fsSupported = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  const isFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+  function toggleFullscreen() {
+    try {
+      if (isFs()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+      const req = root.requestFullscreen || root.webkitRequestFullscreen;
+      const p = req && req.call(root, { navigationUI: "hide" });
+      const lock = () => { try { window.screen.orientation.lock("landscape").catch(() => {}); } catch (e) { /* поворот не заблокировать — не страшно */ } };
+      if (p && p.then) p.then(lock).catch(() => {}); else lock();
+    } catch (e) { /* браузер отказал — играем в окне */ }
+  }
+  function syncFs() { $$(".fs-label").forEach(el => (el.textContent = isFs() ? "Выйти из полного экрана" : "На весь экран")); }
+  $$(".btn-fs").forEach(b => { b.hidden = !fsSupported; b.addEventListener("click", () => { Snd.play("click"); toggleFullscreen(); }); });
+  ["fullscreenchange", "webkitfullscreenchange"].forEach(ev => document.addEventListener(ev, () => { syncFs(); R.resize(); }));
+
+  // подсказка для iPhone в Safari: как добавить игру на экран «Домой»
+  const isIPhone = /iPhone|iPod/.test(navigator.userAgent);
+  const installed = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches;
+  const inFrame = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+  if (isIPhone && !installed && !inFrame && !save.iosTipClosed) $("#ios-tip").hidden = false;
+  $("#ios-tip-close").addEventListener("click", () => { $("#ios-tip").hidden = true; save.iosTipClosed = true; writeSave(); });
+
   addEventListener("resize", () => R.resize());
+  // в Safari размер окна меняется и при повороте, и когда прячутся панели
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", () => R.resize());
+  addEventListener("orientationchange", () => setTimeout(() => R.resize(), 250));
   R.init($("#game-canvas"));
 
   // если страницу обновили, пока она открыта, — вернуться на тот же уровень

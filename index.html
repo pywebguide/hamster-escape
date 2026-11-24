@@ -1,8 +1,17 @@
+<!doctype html>
+<html lang="ru">
 <meta charset="utf-8">
 <title>Хомячий побег</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f6d7a7">
+<!-- режим приложения: после «На экран Домой» игра открывается без панелей браузера -->
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Хомяки">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pangolin&family=Nunito:wght@600;800;900&display=swap">
@@ -180,6 +189,16 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 @keyframes pop { from { opacity: 0; transform: scale(.2) rotate(-30deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
+/* кнопка «на весь экран» в углу меню и подсказка для iPhone */
+.corner { position: fixed; top: calc(12px + var(--safe-t)); right: max(12px, var(--safe-r)); z-index: 2; }
+.tip { position: fixed; top: calc(12px + var(--safe-t)); left: max(12px, var(--safe-l)); width: min(250px, calc(100% - 84px)); z-index: 2;
+  background: #fffaf0; border-radius: 16px; padding: 12px 34px 12px 14px; box-shadow: 0 4px 0 #d9b27e, 0 10px 24px rgba(80, 40, 10, .15);
+  display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 700; line-height: 1.35; color: var(--ink-soft); }
+.tip b { color: var(--ink); font-size: 14px; }
+.tip svg { width: 15px; height: 15px; vertical-align: -3px; color: #2f7cf6; }
+.tip-close { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; border-radius: 50%; background: rgba(74, 47, 29, .08); font-weight: 900; }
+@media (max-width: 760px) and (orientation: landscape) { .tip { width: 200px; font-size: 12px; } }
+
 /* плашка «коснись, чтобы включить музыку» */
 #audio-hint { position: fixed; left: 50%; bottom: calc(14px + var(--safe-b)); transform: translate(-50%, 20px); z-index: 5; display: flex; align-items: center; gap: 8px;
   background: var(--ink); color: #fff; border-radius: 999px; padding: 9px 16px; font-weight: 800; font-size: 14px; white-space: nowrap;
@@ -198,6 +217,12 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 
 <!-- Главное меню -->
 <section id="menu" class="screen paper-bg on">
+  <button class="round corner btn-fs" aria-label="На весь экран" hidden><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <div id="ios-tip" class="tip" hidden>
+    <b>Играть на весь экран</b>
+    <span>Нажми <svg viewBox="0 0 24 24" aria-label="Поделиться"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5M6 11H5v10h14V11h-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> «Поделиться», затем «На экран „Домой“». Открывай игру с нового значка: она запустится как приложение, без панелей Safari.</span>
+    <button id="ios-tip-close" class="tip-close" aria-label="Скрыть подсказку">×</button>
+  </div>
   <div class="menu-card">
     <div id="menu-hams"><canvas aria-hidden="true"></canvas><canvas aria-hidden="true"></canvas><canvas aria-hidden="true"></canvas></div>
     <h1 class="title">Хомячий <span>побег</span></h1>
@@ -274,6 +299,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
     <h2>Пауза</h2>
     <button id="p-resume" class="btn primary">Продолжить</button>
     <button id="p-restart" class="btn">Начать уровень заново</button>
+    <button class="btn ghost btn-fs" hidden><span class="fs-label">На весь экран</span></button>
     <div class="row2"><button id="p-levels" class="btn">Уровни</button><button id="p-menu" class="btn">Меню</button></div>
     <div class="row2">
       <button class="btn ghost btn-music"><span class="mus-label">Музыка: вкл</span></button>
