@@ -87,8 +87,11 @@
 
   // ───────── экраны ─────────
   let screen = "menu";
+  let uiLock = 0;   // после смены экрана 0,35 с кнопки не срабатывают — защита от двойного касания
   function show(id) {
     screen = id;
+    uiLock = performance.now() + 350;
+    if (id !== "game") keepAwake(false);
     $$(".screen").forEach(s => s.classList.toggle("on", s.id === id));
     document.body.dataset.screen = id;
     if (id !== "game") HE.Music.play("menu");
@@ -98,6 +101,7 @@
     if (id === "wardrobe") buildWardrobe();
   }
   function overlay(id) {
+    uiLock = performance.now() + 350;
     $$(".overlay").forEach(s => s.classList.toggle("on", s.id === id));
     paused = !!id;
     HE.Music.dim(id === "pause");
@@ -113,6 +117,7 @@
     if (!keepCam) R.snapCamera(g);
     show("game"); overlay(null);
     HE.Music.play(g.def.world);
+    keepAwake(true);
     buildHud();
     if (!keepCam) showHint();
   }
@@ -175,6 +180,23 @@
   });
   addEventListener("keyup", e => { keys[e.code] = false; });
   addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
+
+  // ───────── iPhone: страница не масштабируется ─────────
+  // Safari игнорирует user-scalable=no: «◀ + прыжок» двумя пальцами он считает щипком и увеличивает страницу.
+  ["gesturestart", "gesturechange", "gestureend"].forEach(tp => document.addEventListener(tp, e => e.preventDefault(), { passive: false }));
+  // два пальца — не масштаб; один палец — прокрутка только в списках (уровни, гардероб), без «резинки» страницы
+  document.addEventListener("touchmove", e => {
+    if (e.touches.length > 1 || !(e.target.closest && e.target.closest(".paper-bg"))) e.preventDefault();
+  }, { passive: false });
+  // двойное касание не увеличивает страницу (кнопки управления не трогаем — там важна скорость)
+  let lastTouchEnd = 0;
+  document.addEventListener("touchend", e => {
+    const now = Date.now();
+    const pad = e.target.closest && e.target.closest("[data-pad], .ham-btn, #btn-switch");
+    if (!pad && now - lastTouchEnd < 330) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+  document.addEventListener("dblclick", e => e.preventDefault(), { passive: false });
 
   function cycleHam() {
     for (let k = 1; k <= 3; k++) { const i = (active + k) % 3; if (!g.hams[i].dead) { selectHam(i); return; } }
@@ -310,7 +332,22 @@
   }
 
   // ───────── кнопки интерфейса ─────────
-  const on = (sel, fn) => $(sel).addEventListener("click", e => { Snd.ensure(); Snd.play("click"); fn(e); });
+  const on = (sel, fn) => $(sel).addEventListener("click", e => {
+    if (performance.now() < uiLock) return;
+    Snd.ensure(); Snd.play("click"); fn(e);
+  });
+
+  // экран не гаснет, пока идёт уровень (iPhone с iOS 16.4, Android, компьютеры)
+  let wakeLock = null;
+  async function keepAwake(want) {
+    try {
+      if (want && !wakeLock && navigator.wakeLock && !document.hidden) {
+        wakeLock = await navigator.wakeLock.request("screen");
+        wakeLock.addEventListener("release", () => { wakeLock = null; });
+      } else if (!want && wakeLock) { const w = wakeLock; wakeLock = null; await w.release(); }
+    } catch (e) { wakeLock = null; /* не дали — экран просто погаснет как обычно */ }
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && screen === "game") keepAwake(true); });
   on("#btn-play", () => startLevel(Math.min(save.last, save.unlocked - 1)));
   on("#btn-levels", () => show("levels"));
   on("#btn-wardrobe", () => show("wardrobe"));
@@ -359,6 +396,11 @@
   const inFrame = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
   if (isIPhone && !installed && !inFrame && !save.iosTipClosed) $("#ios-tip").hidden = false;
   $("#ios-tip-close").addEventListener("click", () => { $("#ios-tip").hidden = true; save.iosTipClosed = true; writeSave(); });
+
+  // работа без интернета: сервис-воркер хранит файлы игры на телефоне (только на сайте, не внутри Claude)
+  if ("serviceWorker" in navigator && location.protocol === "https:" && !inFrame) {
+    navigator.serviceWorker.register("sw.js").catch(() => { /* без офлайна игра всё равно работает */ });
+  }
 
   addEventListener("resize", () => R.resize());
   // в Safari размер окна меняется и при повороте, и когда прячутся панели

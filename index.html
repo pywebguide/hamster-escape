@@ -2,7 +2,7 @@
 <html lang="ru">
 <meta charset="utf-8">
 <title>Хомячий побег</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f6d7a7">
 <!-- режим приложения: после «На экран Домой» игра открывается без панелей браузера -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,6 +29,8 @@
 [hidden] { display: none !important; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; margin: 0; overflow: hidden; background: var(--sawdust); color: var(--ink); font-family: var(--body); }
+/* iPhone в горизонтальном положении сам увеличивает шрифт — запрещаем */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; overscroll-behavior: none; }
 #game, #game-canvas, .pbtn, .ham-btn { touch-action: none; }
 button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
@@ -39,6 +41,8 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 /* ───── экраны ───── */
 .screen, .overlay { position: fixed; inset: 0; opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility .35s; }
 .screen.on, .overlay.on { opacity: 1; visibility: visible; }
+/* исчезающий экран сразу перестаёт ловить касания — второе быстрое нажатие не попадёт в старую кнопку */
+.screen:not(.on), .screen:not(.on) *, .overlay:not(.on), .overlay:not(.on) * { pointer-events: none !important; }
 .paper-bg {
   background:
     radial-gradient(circle at 20% 30%, rgba(196, 140, 80, .18) 0 2px, transparent 3px) 0 0 / 46px 46px,
@@ -139,7 +143,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .hud { position: absolute; top: calc(8px + var(--safe-t)); left: max(10px, var(--safe-l)); right: max(10px, var(--safe-r)); display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; pointer-events: none; }
 .hud > * { pointer-events: auto; }
 .hud-left { display: flex; gap: 6px; }
-.chip { width: 42px; height: 42px; border-radius: 50%; background: var(--glass); display: grid; place-items: center; box-shadow: 0 2px 0 rgba(140, 90, 40, .35), 0 4px 12px rgba(80, 40, 10, .12); backdrop-filter: blur(4px); }
+.chip { width: 42px; height: 42px; border-radius: 50%; background: var(--glass); display: grid; place-items: center; box-shadow: 0 2px 0 rgba(140, 90, 40, .35), 0 4px 12px rgba(80, 40, 10, .12); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 .chip svg { width: 20px; height: 20px; }
 .chip.on { background: var(--accent); color: #fff; }
 .chip:active { transform: scale(.94); }
@@ -149,7 +153,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .ham-btn.active { background: #fff; transform: scale(1.12); box-shadow: 0 0 0 3px var(--accent), 0 4px 14px rgba(217, 97, 26, .35); }
 .ham-btn::after { content: ""; position: absolute; right: -2px; bottom: -2px; width: 18px; height: 18px; border-radius: 50%; background: var(--leaf) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat; transform: scale(0); transition: transform .25s cubic-bezier(.3, 1.6, .5, 1); }
 .ham-btn.home::after { transform: scale(1); }
-.hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; background: var(--glass); border-radius: 14px; padding: 6px 12px; box-shadow: 0 2px 0 rgba(140, 90, 40, .3); backdrop-filter: blur(4px); }
+.hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; background: var(--glass); border-radius: 14px; padding: 6px 12px; box-shadow: 0 2px 0 rgba(140, 90, 40, .3); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 #lvl-name { font-family: var(--display); font-size: 17px; white-space: nowrap; }
 #lvl-seeds { display: flex; gap: 4px; }
 @media (max-width: 620px) { #lvl-name { display: none; } .ham-btn { width: 50px; height: 50px; } .chip { width: 38px; height: 38px; } .hud-left { gap: 4px; } }
@@ -159,7 +163,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .pad.left { left: max(14px, calc(var(--safe-l) + 6px)); }
 .pad.right { right: max(14px, calc(var(--safe-r) + 6px)); }
 .pbtn { width: 76px; height: 76px; border-radius: 50%; background: rgba(255, 250, 240, .55); border: 2px solid rgba(255, 255, 255, .75); display: grid; place-items: center;
-  box-shadow: 0 3px 0 rgba(120, 75, 30, .3), 0 6px 18px rgba(80, 40, 10, .15); backdrop-filter: blur(3px); color: var(--ink); transition: transform .06s, background .06s; touch-action: none; }
+  box-shadow: 0 3px 0 rgba(120, 75, 30, .3), 0 6px 18px rgba(80, 40, 10, .15); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); color: var(--ink); transition: transform .06s, background .06s; touch-action: none; }
 .pbtn svg { width: 34px; height: 34px; }
 .pbtn.down { transform: scale(.92); background: rgba(255, 138, 61, .85); color: #fff; }
 .pbtn.jump { width: 88px; height: 88px; }
@@ -177,7 +181,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 @media (orientation: portrait) { #rotate:not(.gone) { display: flex; } }
 
 /* ───── пауза и победа ───── */
-.overlay { display: grid; place-items: center; background: rgba(60, 35, 15, .42); backdrop-filter: blur(3px); padding: 16px; }
+.overlay { display: grid; place-items: center; background: rgba(60, 35, 15, .42); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); padding: 16px; }
 .card { width: min(380px, 100%); background: var(--cream); border-radius: 24px; padding: 22px 20px; box-shadow: 0 6px 0 #d9b27e, 0 20px 50px rgba(60, 30, 5, .35);
   display: flex; flex-direction: column; gap: 10px; align-items: stretch; transform: scale(.92) translateY(10px); transition: transform .35s cubic-bezier(.3, 1.5, .5, 1); max-height: 100%; overflow-y: auto; }
 .overlay.on .card { transform: none; }

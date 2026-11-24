@@ -19,7 +19,7 @@
 
   R.init = function (canvas) { cv = canvas; ctx = cv.getContext("2d"); R.resize(); };
   R.resize = function () {
-    dpr = Math.min(window.devicePixelRatio || 1, 3);
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = cv.clientWidth; H = cv.clientHeight;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
   };
@@ -224,7 +224,7 @@
   // портрет хомяка для кнопок и меню
   R.portrait = function (canvas, i, hat, t) {
     const c = canvas.getContext("2d");
-    const d = Math.min(window.devicePixelRatio || 1, 3);
+    const d = Math.min(window.devicePixelRatio || 1, 2);
     const w = canvas.clientWidth || 48, h = canvas.clientHeight || 48;
     if (canvas.width !== Math.round(w * d)) { canvas.width = Math.round(w * d); canvas.height = Math.round(h * d); }
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, canvas.width, canvas.height);

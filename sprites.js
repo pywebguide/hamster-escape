@@ -27,6 +27,14 @@
   }
   S.rrect = rrect; S.ellipse = ellipse;
 
+  // Текст в клетках. Safari плохо рисует шрифт меньше 1px, поэтому рисуем 32px и уменьшаем масштабом.
+  S.text = function (ctx, str, x, y, size, weight, color) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(size / 32, size / 32);
+    ctx.fillStyle = color; ctx.font = `${weight} 32px Nunito, "Segoe UI", sans-serif`;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(str, 0, 0); ctx.restore();
+  };
+
   // ───────── хомяк ─────────
   // pose: { x, y (низ-центр), face, squash, vy, onGround, climbing, walk, blink, t, hat, i }
   S.hamster = function (ctx, p) {
@@ -228,7 +236,7 @@
       ctx.fillStyle = p.down ? "#8a2b2b" : "#e23b3b";
       ctx.beginPath(); ctx.ellipse(p.x + 0.5, p.y + 0.88 + dy * 0.5, 0.32, 0.2 - dy, 0, Math.PI, 0); ctx.fill();
       ctx.fillStyle = col; ctx.fillRect(p.x + 0.12, p.y + 0.86, 0.76, 0.06);
-      if (p.down) { ctx.fillStyle = "#ffffff"; ctx.font = "bold 0.22px sans-serif"; ctx.textAlign = "center"; ctx.fillText("✓", p.x + 0.5, p.y + 0.84); }
+      if (p.down) S.text(ctx, "✓", p.x + 0.5, p.y + 0.77, 0.22, 900, "#ffffff");
     } else {
       ctx.fillStyle = p.down ? S.lighten(col, -0.25) : col;
       rrect(ctx, p.x + 0.12, p.y + 0.78 + dy, 0.76, 0.14, 0.05); ctx.fill();
@@ -316,7 +324,6 @@
     const sx = cx, sy = bot - h * 0.82 - 0.42 + Math.sin(t * 2) * 0.03;
     ctx.fillStyle = "#8a5a33"; ctx.fillRect(sx - 0.03, sy, 0.06, 0.3);
     ctx.fillStyle = count === 3 ? "#7ed957" : "#e7c38a"; rrect(ctx, sx - 0.4, sy - 0.34, 0.8, 0.36, 0.08); ctx.fill();
-    ctx.fillStyle = "#5a3a22"; ctx.font = "800 0.24px Nunito, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText(`${count}/3`, sx, sy - 0.15);
+    S.text(ctx, `${count}/3`, sx, sy - 0.15, 0.24, 800, "#5a3a22");
   };
 })();
