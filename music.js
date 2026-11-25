@@ -17,6 +17,19 @@
       mel: ["1---3---", "6---5---", "3---5-4-", "7---5---", "1---3-5-", "6---8---", "7-6-5-3-", "2---1---"] },
     3: { bpm: 112, root: 55, scale: MAJOR, prog: [1, 5, 6, 4, 1, 5, 6, 4], style: "bright",
       mel: ["3-5-8-7-", "5---2-3-", "6-5-3-5-", "4---6---", "3-5-8-9-", "A-9-8-5-", "6-5-4-3-", "2---1---"] },
+    // теплица: тёплая и неспешная
+    4: { bpm: 100, root: 62, scale: MAJOR, prog: [1, 4, 6, 5, 1, 4, 5, 1], style: "bright",
+      mel: ["3-5-6-5-", "4-6-8---", "6-5-3-5-", "2---5---", "3-5-6-8-", "9-8-6-5-", "4-5-6-7-", "8-------"] },
+    // мастерская: бодрая, «механическая», в миноре
+    5: { bpm: 124, root: 57, scale: MINOR, prog: [1, 6, 7, 1, 1, 4, 7, 5], style: "bouncy",
+      mel: ["1.1.5.1.", "6.5.3.2.", "1.1.5.8.", "7-5-....", "4.4.6.4.", "3.4.5.6.", "7.6.5.4.", "5---...."] },
+    // ночной двор: на цыпочках
+    6: { bpm: 96, root: 55, scale: MINOR, prog: [1, 4, 1, 5, 6, 4, 5, 1], style: "sneak",
+      mel: ["1.3.5.3.", "4.....3.", "1.3.5.6.", "5.......", "6.5.4.3.", "4.3.2.1.", "2.3.4.2.", "1......."] },
+    story: { bpm: 76, root: 60, scale: MAJOR, prog: [1, 6, 4, 5, 1, 6, 4, 1], style: "soft",
+      mel: ["5---6---", "5---3---", "4---5---", "2-------", "3---5---", "6---8---", "7---5---", "8-------"] },
+    finale: { bpm: 116, root: 62, scale: MAJOR, prog: [1, 4, 5, 1, 6, 4, 5, 1], style: "bright",
+      mel: ["5-5-6-8-", "8-6-5---", "4-4-5-6-", "5-3-2---", "5-5-6-8-", "A-9-8-6-", "5-6-7-9-", "8-------"] },
   };
 
   // разбор мелодии в ноты: { step, deg, len }
@@ -72,14 +85,15 @@
     const n = song.notes[i];
     if (n) {
       const f = hz(midi(song, n.deg, 1)), dur = n.len * sp;
-      if (st === "dark") note("sine", f, t, dur * 1.1, 0.16, 0.04);
+      if (st === "sneak") { note("triangle", f, t, Math.min(dur, sp * 0.55), 0.15); note("sine", f / 2, t, Math.min(dur, sp * 0.5), 0.05); }
+      else if (st === "dark") note("sine", f, t, dur * 1.1, 0.16, 0.04);
       else if (st === "soft") note("triangle", f, t, dur, 0.17, 0.02);
       else { note("triangle", f, t, dur, 0.15); note("square", f * 2, t, Math.min(dur, sp * 0.9), 0.018); }
     }
     // аккорд
     const tones = [0, 2, 4].map(k => hz(midi(song, chordDeg + k, 0)));
-    if (st === "soft" || st === "dark") {
-      if (pos === 0) tones.forEach(f => note("sine", f, t, sp * 7.5, st === "dark" ? 0.045 : 0.05, 0.25));
+    if (st === "soft" || st === "dark" || st === "sneak") {
+      if (pos === 0) tones.forEach(f => note("sine", f, t, sp * 7.5, st === "soft" ? 0.05 : 0.04, 0.25));
     } else if (pos === 2 || pos === 6) {
       tones.forEach(f => note("triangle", f, t, sp * 0.7, 0.035));
     }
@@ -88,12 +102,17 @@
     if (st === "bouncy" || st === "bright") {
       if (pos === 0 || pos === 4) note("triangle", bassF, t, sp * 1.6, 0.2);
       if (pos === 7) note("triangle", bassF * 1.5, t, sp * 0.6, 0.12);
+    } else if (st === "sneak") {   // крадущийся бас на каждую долю
+      if (pos % 2 === 0) note("triangle", pos % 4 === 0 ? bassF : bassF * 1.5, t, sp * 0.7, 0.17);
     } else if (pos === 0) note("triangle", bassF, t, sp * 6, 0.18, 0.03);
     // ударные
     if (st === "bouncy" || st === "bright") {
       if (pos === 0 || pos === 4) kick(t, 0.32);
       if (pos === 2 || pos === 6) hit(t, 1800, 0.8, 0.12, 0.09, "bandpass");
       if (pos % 2 === 1) hit(t, 7000, 0.5, 0.04, 0.035);
+    } else if (st === "sneak") {
+      if (pos === 4) hit(t, 2600, 1.2, 0.07, 0.035, "bandpass");
+      if (pos % 2 === 1) hit(t, 8000, 0.5, 0.025, 0.016);
     } else if (st === "dark") {
       if (pos === 0) kick(t, 0.18);
       if (pos === 3 || pos === 7) hit(t, 5000, 1, 0.07, 0.025);

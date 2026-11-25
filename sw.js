@@ -1,8 +1,8 @@
 // Сервис-воркер «Хомячьего побега»: игра открывается и без интернета.
 // Стратегия «сначала сеть»: есть интернет — берём свежую версию и кладём в кэш, нет — отдаём из кэша.
-const CACHE = "hamster-escape-v1";
+const CACHE = "hamster-escape-v2";
 const CORE = [
-  "./", "index.html", "levels.js", "engine.js", "sprites.js", "render.js", "music.js", "main.js",
+  "./", "index.html", "levels.js", "engine.js", "sprites.js", "render.js", "story.js", "music.js", "main.js",
   "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png",
 ];
 
